@@ -3,30 +3,120 @@ import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [saveloading, setsaveLoading] = useState(false);
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [eyes,seteyes] = useState(true);
 
+  const router = useRouter();
   const { user } = useAuth();
 
+  /* Animations */
+  const cardOpacity = useRef(new Animated.Value(0)).current;
+  const cardTranslate = useRef(new Animated.Value(30)).current;
+
+  const inputY = useRef([
+    new Animated.Value(20),
+    new Animated.Value(20),
+  ]).current;
+
+  const inputOpacity = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
+
+  const planeAnim = useRef(new Animated.Value(0)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
   useEffect(() => {
-    if (user) {
-      router.replace("/");
-    }
+    if (user) router.replace("/");
   }, [user]);
+
+  /* Entry animation */
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(cardOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(cardTranslate, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    Animated.stagger(
+      120,
+      inputY.map((y, i) =>
+        Animated.parallel([
+          Animated.timing(y, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(inputOpacity[i], {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ])
+      )
+    ).start();
+  }, []);
+
+  /* Floating airplane */
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(planeAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(planeAnim, {
+          toValue: 0,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  /* Button pulse */
+  useEffect(() => {
+    if (loading) return;
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.03,
+          duration: 1800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [loading]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -39,113 +129,203 @@ export default function Login() {
     }
 
     try {
-      setsaveLoading(true);
+      setLoading(true);
       await auth().signInWithEmailAndPassword(email, password);
-      Toast.show({ type: "success", text1: "Welcome back!" });
+      Toast.show({ type: "success", text1: "Welcome back 👋" });
       router.replace("/");
     } catch (error: any) {
       let message = "Login failed. Please try again.";
-
-      if (error.code === "auth/user-not-found") message = "No user found.";
-      else if (error.code === "auth/wrong-password") message = "Incorrect password.";
-      else if (error.code === "auth/invalid-email") message = "Invalid email address.";
-
+      if (error.code === "auth/user-not-found") message = "Account not found";
+      else if (error.code === "auth/wrong-password") message = "Incorrect password";
+      else if (error.code === "auth/invalid-email") message = "Invalid email address";
       Toast.show({ type: "error", text1: message });
     } finally {
-      setsaveLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <LinearGradient
-      colors={["#ffffff", "#f9fafb", "#f3f4f6"]}
-      className="flex-1"
-    >
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+    <LinearGradient colors={["#f8fafc", "#eef2ff"]} className="flex-1">
+      <StatusBar barStyle="dark-content" />
 
       <View className="flex-1 justify-center px-6">
-        {/* CARD */}
-        <View
-          className="bg-white rounded-3xl p-6 border border-gray-200"
+        <Animated.View
           style={{
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.08,
-            shadowRadius: 10,
-            elevation: 4,
+            opacity: cardOpacity,
+            transform: [{ translateY: cardTranslate }],
           }}
+          className="bg-white rounded-2xl px-6 py-8 shadow-lg"
         >
-          <Text className="text-gray-900 text-3xl font-bold text-center mb-6">
-            Welcome Back
-          </Text>
+          {/* Header */}
+          <View className="items-center mb-8">
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    translateY: planeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, -8],
+                    }),
+                  },
+                  {
+                    rotate: planeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ["0deg", "3deg"],
+                    }),
+                  },
+                ],
+              }}
+              className="w-14 h-14 rounded-full bg-blue-600 items-center justify-center mb-4"
+            >
+              <Ionicons name="airplane-outline" size={26} color="#fff" />
+            </Animated.View>
 
-          {/* EMAIL INPUT */}
-          <View className="flex-row items-center bg-gray-50 border border-gray-300 rounded-2xl px-3 py-3 mb-4">
-            <View className="bg-blue-50 p-2 rounded-xl mr-3">
-              <Ionicons name="mail-outline" size={18} color="#3b82f6" />
-            </View>
+            <Text className="text-2xl font-bold text-gray-900">
+              Welcome
+            </Text>
+            <Text className="text-gray-500 text-sm mt-1 text-center">
+              Sign in to continue your journey
+            </Text>
+          </View>
 
-            <TextInput
-              placeholder="Email Address"
-              placeholderTextColor="#9ca3af"
+          {/* Inputs */}
+          <Animated.View
+            style={{
+              opacity: inputOpacity[0],
+              transform: [{ translateY: inputY[0] }],
+            }}
+          >
+            <FormInput
+              label="Email Address"
+              icon="mail-outline"
+              placeholder="you@example.com"
               value={email}
               onChangeText={setEmail}
-              className="flex-1 text-gray-800"
               keyboardType="email-address"
               autoCapitalize="none"
             />
-          </View>
+          </Animated.View>
 
-          {/* PASSWORD INPUT */}
-          <View className="flex-row items-center bg-gray-50 border border-gray-300 rounded-2xl px-3 py-3 mb-5">
-            <View className="bg-emerald-50 p-2 rounded-xl mr-3">
-              <Ionicons name="lock-closed-outline" size={18} color="#10b981" />
-            </View>
-
-            <TextInput
-              placeholder="Password"
-              placeholderTextColor="#9ca3af"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              className="flex-1 text-gray-800"
-            />
-          </View>
-
-          {/* LOGIN BUTTON */}
-          <TouchableOpacity
-            disabled={saveloading}
-            onPress={handleLogin}
-            activeOpacity={0.9}
-            className="bg-blue-600 rounded-2xl py-4 flex-row justify-center items-center"
+          <Animated.View
             style={{
-              shadowColor: "#3b82f6",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.28,
-              shadowRadius: 8,
-              elevation: 8,
+              opacity: inputOpacity[1],
+              transform: [{ translateY: inputY[1] }],
             }}
           >
-            {saveloading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="text-white text-base font-bold">Login</Text>
-            )}
+            <View>
+              <FormInput
+              label="Password"
+              icon="lock-closed-outline"
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={eyes}
+            />
+              <TouchableOpacity className="absolute right-0 top-9 mr-4">
+                {eyes ?<Ionicons name="eye-off-outline" size={20} color="#6b7280" onPress={()=>seteyes(!eyes)}/>:<Ionicons name="eye-outline" size={20} color="#6b7280" onPress={()=>seteyes(!eyes)}/>}
+              </TouchableOpacity>
+            </View>
+            
+          </Animated.View>
+
+          {/* Button */}
+          <TouchableOpacity
+            disabled={loading}
+            activeOpacity={1}
+            onPress={handleLogin}
+            onPressIn={() =>
+              Animated.spring(buttonScale, {
+                toValue: 0.95,
+                useNativeDriver: true,
+              }).start()
+            }
+            onPressOut={() =>
+              Animated.spring(buttonScale, {
+                toValue: 1,
+                friction: 6,
+                useNativeDriver: true,
+              }).start()
+            }
+            className="mt-4"
+          >
+            <Animated.View
+              style={{
+                transform: [
+                  { scale: loading ? 1 : pulseAnim },
+                  { scale: buttonScale },
+                ],
+              }}
+              className="bg-blue-600 rounded-xl py-4 items-center"
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white text-base font-semibold">
+                  Sign In
+                </Text>
+              )}
+            </Animated.View>
           </TouchableOpacity>
 
-          {/* REGISTER LINK */}
-          <TouchableOpacity
-            onPress={() => router.push("/register")}
-            className="mt-5"
-          >
-            <Text className="text-blue-600 text-center font-medium">
-              Don’t have an account? Register
+          {/* Footer */}
+          <View className="flex-row justify-center mt-6">
+            <Text className="text-gray-500 text-sm">
+              Don’t have an account?
             </Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity onPress={() => router.push("/register")}>
+              <Text className="text-blue-600 font-semibold ml-1 text-sm">
+                Register
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </View>
 
       <Toast />
     </LinearGradient>
   );
 }
+
+/* ---------- INPUT ---------- */
+const FormInput = ({ label, icon, ...props }: any) => {
+  const focusAnim = useRef(new Animated.Value(0)).current;
+
+  return (
+    <View className="mb-5">
+      <Text className="text-xs font-medium text-gray-600 mb-2">
+        {label}
+      </Text>
+
+      <Animated.View
+        style={{
+          borderColor: focusAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: ["#e5e7eb", "#3b82f6"],
+          }),
+        }}
+        className="flex-row items-center border rounded-xl px-4 h-12 bg-gray-50"
+      >
+        <Ionicons name={icon} size={18} color="#6b7280" />
+        <TextInput
+          {...props}
+          className="flex-1 ml-3 text-gray-900 text-sm"
+          placeholderTextColor="#9ca3af"
+          onFocus={() =>
+            Animated.timing(focusAnim, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: false,
+            }).start()
+          }
+          onBlur={() =>
+            Animated.timing(focusAnim, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: false,
+            }).start()
+          }
+        />
+      </Animated.View>
+    </View>
+  );
+};

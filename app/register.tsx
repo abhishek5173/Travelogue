@@ -1,20 +1,20 @@
 import { useAuth } from "@/lib/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
-
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 
@@ -24,6 +24,24 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const cardFade = useRef(new Animated.Value(0)).current;
+  const cardTranslate = useRef(new Animated.Value(30)).current;
+
+  const inputAnim = useRef([
+    new Animated.Value(20),
+    new Animated.Value(20),
+    new Animated.Value(20),
+  ]).current;
+
+  const inputOpacity = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
+
+  const floatIcon = useRef(new Animated.Value(0)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+
   const { user } = useAuth();
   const router = useRouter();
 
@@ -31,15 +49,65 @@ export default function Register() {
     if (user) router.replace("/");
   }, [user]);
 
-  
+  /* CARD + INPUT ENTRANCE */
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(cardFade, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(cardTranslate, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    Animated.stagger(
+      120,
+      inputAnim.map((anim, i) =>
+        Animated.parallel([
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(inputOpacity[i], {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ])
+      )
+    ).start();
+  }, []);
+
+  /* FLOATING ICON */
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatIcon, {
+          toValue: -6,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatIcon, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    if (!name || !email || !password) {
       Toast.show({ type: "error", text1: "All fields are required" });
       return;
     }
     if (!email.includes("@")) {
-      Toast.show({ type: "error", text1: "Please enter a valid email" });
+      Toast.show({ type: "error", text1: "Invalid email address" });
       return;
     }
     if (password.length < 6) {
@@ -52,144 +120,158 @@ export default function Register() {
 
     try {
       setLoading(true);
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-      const createdUser = userCredential.user;
-
-      await createdUser.updateProfile({ displayName: name });
+      const res = await auth().createUserWithEmailAndPassword(email, password);
+      await res.user.updateProfile({ displayName: name });
 
       Toast.show({ type: "success", text1: "Account created successfully!" });
       router.replace("/");
-    } catch (error: any) {
-      if (error.code === "auth/email-already-in-use") {
-        Toast.show({ type: "error", text1: "Email already registered" });
-      } else {
-        Toast.show({
-          type: "error",
-          text1: "Registration Failed",
-          text2: error.message,
-        });
-      }
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: "Registration failed",
+        text2: err.message,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <LinearGradient
-      colors={["#ffffff", "#f9fafb", "#f3f4f6"]}
-      className="flex-1"
-    >
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+    <LinearGradient colors={["#f8fafc", "#eef2ff"]} className="flex-1">
+      <StatusBar barStyle="dark-content" />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 24 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            paddingHorizontal: 24,
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Card */}
-          <View
-            className="bg-white rounded-3xl p-6 border border-gray-200"
+          {/* CARD */}
+          <Animated.View
             style={{
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: 0.08,
-              shadowRadius: 10,
-              elevation: 4,
+              opacity: cardFade,
+              transform: [{ translateY: cardTranslate }],
             }}
+            className="bg-white rounded-2xl px-6 py-8 shadow-lg"
           >
+            {/* HEADER */}
+            <View className="items-center mb-8">
+              <Animated.View
+                style={{ transform: [{ translateY: floatIcon }] }}
+                className="w-14 h-14 rounded-full bg-blue-600 items-center justify-center mb-4"
+              >
+                <Ionicons name="airplane-outline" size={26} color="#fff" />
+              </Animated.View>
 
-            {/* Header Icon Bubble */}
-            <View className="items-center mb-6">
-              <View className="bg-blue-50 w-20 h-20 rounded-full items-center justify-center mb-4">
-                <Ionicons name="person-add" size={32} color="#3b82f6" />
-              </View>
-
-              <Text className="text-gray-900 text-3xl font-bold">Create Account</Text>
-              <Text className="text-gray-500 text-sm mt-1">Join the Royal Palace Community</Text>
+              <Text className="text-2xl font-bold text-gray-900">
+                Create Account
+              </Text>
+              <Text className="text-gray-500 text-sm mt-1 text-center">
+                Join us and start exploring
+              </Text>
             </View>
 
-            {/* Name */}
-            <View className="flex-row items-center bg-gray-50 border border-gray-300 rounded-2xl px-3 py-3 mb-4">
-              <View className="bg-blue-50 p-2 rounded-xl mr-3">
-                <Ionicons name="person-outline" size={18} color="#3b82f6" />
-              </View>
-              <TextInput
-                placeholder="Full Name"
-                placeholderTextColor="#9ca3af"
-                className="flex-1 text-gray-800"
+            {/* INPUTS */}
+            <Animated.View
+              style={{
+                opacity: inputOpacity[0],
+                transform: [{ translateY: inputAnim[0] }],
+              }}
+            >
+              <FormInput
+                label="Full Name"
+                icon="person-outline"
+                placeholder="John Doe"
                 value={name}
                 onChangeText={setName}
               />
-            </View>
+            </Animated.View>
 
-            {/* Email */}
-            <View className="flex-row items-center bg-gray-50 border border-gray-300 rounded-2xl px-3 py-3 mb-4">
-              <View className="bg-blue-50 p-2 rounded-xl mr-3">
-                <Ionicons name="mail-outline" size={18} color="#3b82f6" />
-              </View>
-              <TextInput
-                placeholder="Email Address"
-                placeholderTextColor="#9ca3af"
-                className="flex-1 text-gray-800"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
-            </View>
-
-            {/* Password */}
-            <View className="flex-row items-center bg-gray-50 border border-gray-300 rounded-2xl px-3 py-3 mb-6">
-              <View className="bg-emerald-50 p-2 rounded-xl mr-3">
-                <Ionicons name="lock-closed-outline" size={18} color="#10b981" />
-              </View>
-              <TextInput
-                placeholder="Password"
-                placeholderTextColor="#9ca3af"
-                className="flex-1 text-gray-800"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-            </View>
-
-            {/* Register Button */}
-            <TouchableOpacity
-              disabled={loading}
-              onPress={handleRegister}
-              activeOpacity={0.9}
-              className="bg-blue-600 rounded-2xl py-4 flex-row justify-center items-center"
+            <Animated.View
               style={{
-                shadowColor: "#3b82f6",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.28,
-                shadowRadius: 8,
-                elevation: 8,
+                opacity: inputOpacity[1],
+                transform: [{ translateY: inputAnim[1] }],
               }}
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-                  <Text className="text-white text-base font-bold ml-2">Register</Text>
-                </>
-              )}
+              <FormInput
+                label="Email Address"
+                icon="mail-outline"
+                placeholder="you@example.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </Animated.View>
+
+            <Animated.View
+              style={{
+                opacity: inputOpacity[2],
+                transform: [{ translateY: inputAnim[2] }],
+              }}
+            >
+              <FormInput
+                label="Password"
+                icon="lock-closed-outline"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </Animated.View>
+
+            {/* CTA */}
+            <TouchableOpacity
+              disabled={loading}
+              activeOpacity={1}
+              onPress={handleRegister}
+              onPressIn={() =>
+                Animated.spring(buttonScale, {
+                  toValue: 0.95,
+                  useNativeDriver: true,
+                }).start()
+              }
+              onPressOut={() =>
+                Animated.spring(buttonScale, {
+                  toValue: 1,
+                  friction: 6,
+                  useNativeDriver: true,
+                }).start()
+              }
+              className="mt-4"
+            >
+              <Animated.View
+                style={{ transform: [{ scale: buttonScale }] }}
+                className="bg-blue-600 rounded-xl py-4 items-center"
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text className="text-white text-base font-semibold">
+                    Create Account
+                  </Text>
+                )}
+              </Animated.View>
             </TouchableOpacity>
 
-            {/* Login Redirect */}
-            <TouchableOpacity
-              onPress={() => router.push("/login")}
-              className="mt-5"
-            >
-              <Text className="text-blue-600 text-center font-medium">
-                Already have an account? Login
+            {/* FOOTER */}
+            <View className="flex-row justify-center mt-6">
+              <Text className="text-gray-500 text-sm">
+                Already have an account?
               </Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity onPress={() => router.push("/login")}>
+                <Text className="text-blue-600 font-semibold ml-1 text-sm">
+                  Sign In
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -197,3 +279,45 @@ export default function Register() {
     </LinearGradient>
   );
 }
+
+/* ---------- INPUT ---------- */
+const FormInput = ({ label, icon, ...props }: any) => {
+  const focusAnim = useRef(new Animated.Value(0)).current;
+
+  return (
+    <View className="mb-5">
+      <Text className="text-xs font-medium text-gray-600 mb-2">{label}</Text>
+
+      <Animated.View
+        style={{
+          borderColor: focusAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: ["#e5e7eb", "#3b82f6"],
+          }),
+        }}
+        className="flex-row items-center border rounded-xl px-4 h-12 bg-gray-50"
+      >
+        <Ionicons name={icon} size={18} color="#6b7280" />
+        <TextInput
+          {...props}
+          className="flex-1 ml-3 text-gray-900 text-sm"
+          placeholderTextColor="#9ca3af"
+          onFocus={() =>
+            Animated.timing(focusAnim, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: false,
+            }).start()
+          }
+          onBlur={() =>
+            Animated.timing(focusAnim, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: false,
+            }).start()
+          }
+        />
+      </Animated.View>
+    </View>
+  );
+};
