@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1094013964282",
+    "project_id": "travelogue-16c66",
+    "storage_bucket": "travelogue-16c66.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1094013964282:android:5c5801b683b5a90b1fde43",
+        "android_client_info": {
+          "package_name": "com.abhishek5173.Travelogue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKB67WohaBBS4GniY1Ne2yDTWvo6cu6Io"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

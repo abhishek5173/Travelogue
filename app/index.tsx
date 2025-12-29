@@ -1,5 +1,6 @@
 import { auth } from "@/lib/firebaseConfig";
-import { useShareListener } from "@/lib/Share";
+import { useInstagramShare } from "@/lib/Share";
+
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { StatusBar, Text, TouchableOpacity, View } from "react-native";
@@ -7,9 +8,9 @@ import { StatusBar, Text, TouchableOpacity, View } from "react-native";
 export default function Index() {
   const [url, setUrl] = useState<string | null>(null);
 
-  useShareListener((sharedUrl) => {
-    console.log("📥 Shared URL received:", sharedUrl);
-    setUrl(sharedUrl);
+  useInstagramShare((receivedUrl) => {
+    console.log("Received URL:", receivedUrl);
+    setUrl(receivedUrl);
   });
 
   return (
