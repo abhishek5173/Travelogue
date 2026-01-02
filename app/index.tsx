@@ -22,6 +22,86 @@ export default function Index() {
     setUrl(receivedUrl);
   });
 
+ const book = [
+  {
+    title: "Flight Bookings",
+    about: "Compare airlines and book flights at the best prices",
+    icon: "airplane-outline",
+  },
+  {
+    title: "Hotel Bookings",
+    about: "Find and reserve hotels that fit your budget and comfort",
+    icon: "bed-outline",
+  },
+  {
+    title: "Train/Bus Bookings",
+    about: "Book trains and buses for smooth intercity travel",
+    icon: "bus-outline",
+  },
+  {
+    title: "Car/Bike Rentals",
+    about: "Rent cars or bikes easily for local transportation",
+    icon: "car-outline",
+  },
+  {
+    title: "Airport Transfers",
+    about: "Hassle-free pickup and drop services at airports",
+    icon: "swap-horizontal-outline",
+  },
+  {
+    title: "Travel Insurance",
+    about: "Get travel insurance for a safe and worry-free trip",
+    icon: "shield-checkmark-outline",
+  },
+];
+
+const plan = [
+  {
+    title: "Destination Discovery",
+    about: "Find your next travel spot",
+    icon: "compass-outline",
+  },
+  {
+    title: "Search And Compare",
+    about: "Best deals for flights and hotels",
+    icon: "search-outline",
+  },
+  {
+    title: "Activity Planner",
+    about: "Organize your itinerary",
+    icon: "calendar-outline",
+  },
+  {
+    title: "Budget Tracker",
+    about: "Manage your travel expenses",
+    icon: "wallet-outline",
+  },
+  {
+    title: "AI Trip Planner",
+    about: "Personalized travel plans with AI",
+    icon: "sparkles-outline",
+  },
+  {
+    title: "Visa and Entry Requirements",
+    about: "Up-to-date visa info",
+    icon: "document-text-outline",
+  },
+];
+
+
+
+
+  const chunkArray = (arr: any[], size: number) => {
+    const chunks = [];
+    for (let i = 0; i < arr.length; i += size) {
+      chunks.push(arr.slice(i, i + size));
+    }
+    return chunks;
+  };
+
+  const planChunks = chunkArray(plan, 3);
+  const bookChunks = chunkArray(book, 3);
+
   return (
     <View className="flex-1 bg-white/70">
       <StatusBar barStyle="dark-content" />
@@ -97,7 +177,7 @@ export default function Index() {
               </View>
               <Image
                 source={require("../assets/images/iconn.png")}
-                className="w-24 h-24 rounded-xl"
+                className="w-20 h-20 rounded-xl"
                 resizeMode="contain"
               />
             </View>
@@ -142,39 +222,141 @@ export default function Index() {
             Plan And Discover ✨
           </Text>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {[1, 2, 3].map((_, index) => (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className=""
+          >
+            {planChunks.map((group, index) => (
               <View
                 key={index}
-                className="bg-white rounded-3xl w-64 mr-5 overflow-hidden"
+                className="flex-row mr-6"
+                style={{ width: 320 }} // one page width
               >
-                {/* Image Placeholder */}
-                <View className="h-40 bg-gray-300" />
+                {/* BIG CARD (1st item) */}
+                {group[0] && (
+                  <View
+                    className="w-[62%] bg-blue-100 rounded-3xl p-4 justify-between"
 
-                {/* Content */}
-                <View className="p-4">
-                  <Text className="text-lg font-bold text-gray-900">
-                    Pisa Tower
-                  </Text>
-                  <Text className="text-sm text-gray-500 mt-1">
-                    Toscana, Italy
-                  </Text>
+                  >
+                    <Ionicons
+                      name={group[0].icon}
+                      size={28}
+                      color="#2563eb"
+                    />
 
-                  <View className="flex-row justify-between items-center mt-4">
                     <View>
-                      <Text className="text-xs text-gray-500">Distance</Text>
-                      <Text className="font-semibold">2.8 km</Text>
+                      <Text className="text-lg font-bold text-gray-900">
+                        {group[0].title}
+                      </Text>
+                      <Text className="text-sm text-gray-500 mt-2 leading-5">
+                        {group[0].about}
+                      </Text>
                     </View>
 
-                    <Pressable className="bg-blue-500 w-10 h-10 rounded-full items-center justify-center">
+                    <Pressable className="mt-4 self-end bg-blue-600 w-10 h-10 rounded-full items-center justify-center">
                       <Ionicons name="arrow-forward" size={18} color="white" />
                     </Pressable>
                   </View>
+                )}
+
+                {/* RIGHT STACK (2nd & 3rd items) */}
+                <View className="flex-1 ml-3 justify-between">
+                  {group.slice(1).map((item, idx) => (
+                    <View
+                      key={idx}
+                      className="bg-blue-50 rounded-2xl p-3 h-[48%]"
+                    >
+                      <Ionicons
+                        name={item.icon}
+                        size={20}
+                        color="#2563eb"
+                      />
+
+                      <Text className="mt-2 font-semibold text-gray-900 text-sm">
+                        {item.title}
+                      </Text>
+
+                      {/* <Text className="text-xs text-gray-500 mt-1 leading-4">
+                        {item.about}
+                      </Text> */}
+                    </View>
+                  ))}
                 </View>
               </View>
             ))}
           </ScrollView>
 
+          {/* 2nd Row */}
+             <Text className="text-xl font-semibold text-gray-900 mt-4 mb-4">
+            Book And Pay ✨
+          </Text>
+
+                    <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className=""
+          >
+            {bookChunks.map((group, index) => (
+              <View
+                key={index}
+                className="flex-row mr-6"
+                style={{ width: 320 }} // one page width
+              >
+                {/* BIG CARD (1st item) */}
+                {group[0] && (
+                  <View
+                    className="w-[62%] bg-blue-100 rounded-3xl p-4 justify-between"
+
+                  >
+                    <Ionicons
+                      name={group[0].icon}
+                      size={28}
+                      color="#2563eb"
+                    />
+
+                    <View>
+                      <Text className="text-lg font-bold text-gray-900">
+                        {group[0].title}
+                      </Text>
+                      <Text className="text-sm text-gray-500 mt-2 leading-5">
+                        {group[0].about}
+                      </Text>
+                    </View>
+
+                    <Pressable className="mt-4 self-end bg-blue-600 w-10 h-10 rounded-full items-center justify-center">
+                      <Ionicons name="arrow-forward" size={18} color="white" />
+                    </Pressable>
+                  </View>
+                )}
+
+                {/* RIGHT STACK (2nd & 3rd items) */}
+                <View className="flex-1 ml-3 justify-between">
+                  {group.slice(1).map((item, idx) => (
+                    <View
+                      key={idx}
+                      className="bg-blue-50 rounded-2xl p-3 h-[48%]"
+                    >
+                      <Ionicons
+                        name={item.icon}
+                        size={20}
+                        color="#2563eb"
+                      />
+
+                      <Text className="mt-2 font-semibold text-gray-900 text-sm">
+                        {item.title}
+                      </Text>
+
+                      {/* <Text className="text-xs text-gray-500 mt-1 leading-4">
+                        {item.about}
+                      </Text> */}
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+              
           <View className="h-28" />
         </ScrollView>
       </SafeAreaView>
